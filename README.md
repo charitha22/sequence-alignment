@@ -1,1 +1,1 @@
-## [Smith–Waterman] (https://en.wikipedia.org/wiki/Smith%E2%80%93Waterman_algorithm) algorithm C++ implementation 
+# Smith–Waterman algorithm C++ implementation 
