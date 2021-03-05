@@ -18,6 +18,7 @@ int main(int argc, char **argv)
   NeedlemanWunschSA<char, vector<char>> NWSA(match);
   SmithWatermanSA<char, vector<char>> SWSA(match);
 
+  // example from : https://en.wikipedia.org/wiki/Smith%E2%80%93Waterman_algorithm
   string s1 = "TGTTACGG";
   string s2 = "GGTTGACTA";
 
