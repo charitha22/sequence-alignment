@@ -11,6 +11,7 @@ using namespace std;
 template <typename elemTy, typename ArrayTy> class SmithWatermanSA {
 private:
   ScoringFunction<elemTy> &scoringFunc;
+  bool allowMismatches {false};
 
   AlignedSeq<elemTy> constructSoln(Matrix &m, ArrayTy &seq1, ArrayTy &seq2,
                                    int startRow, int endRow, int startCol,
@@ -32,16 +33,25 @@ private:
     int startj = maxj;
     while (starti >= startRow && startj >= startCol) {
       if (m(starti, startj).getDirection() == DIAG) {
-        AlignedPair<elemTy> point(&seq1[starti], &seq2[startj]);
-        soln.insert(soln.begin(), point);
+        if(scoringFunc.isSimilar(seq1[starti], seq2[startj]) || allowMismatches) {
+          AlignedPair<elemTy> point(&seq1[starti], &seq2[startj], true);
+          soln.insert(soln.begin(), point);
+        }
+        else {
+          AlignedPair<elemTy> point1(&seq1[starti], nullptr, false);
+          AlignedPair<elemTy> point2(nullptr, &seq2[startj], false);
+          soln.insert(soln.begin(), point2);
+          soln.insert(soln.begin(), point1);
+        }
+
         starti--;
         startj--;
       } else if (m(starti, startj).getDirection() == LEFT) {
-        AlignedPair<elemTy> point(nullptr, &seq2[startj]);
+        AlignedPair<elemTy> point(nullptr, &seq2[startj], false);
         soln.insert(soln.begin(), point);
         startj--;
       } else {
-        AlignedPair<elemTy> point(&seq1[starti], nullptr);
+        AlignedPair<elemTy> point(&seq1[starti], nullptr, false);
         soln.insert(soln.begin(), point);
         starti--;
       }
@@ -56,12 +66,12 @@ private:
 
     // add any remainder from the begining of the Matrix
     while (starti >= startRow) {
-      AlignedPair<elemTy> point(&seq1[starti], nullptr);
+      AlignedPair<elemTy> point(&seq1[starti], nullptr, false);
       soln.insert(soln.begin(), point);
       starti--;
     }
     while (startj >= startCol) {
-      AlignedPair<elemTy> point(nullptr, &seq2[startj]);
+      AlignedPair<elemTy> point(nullptr, &seq2[startj], false);
       soln.insert(soln.begin(), point);
       startj--;
     }
@@ -95,8 +105,8 @@ private:
   }
 
 public:
-  SmithWatermanSA(ScoringFunction<elemTy> &scoringFunc)
-      : scoringFunc(scoringFunc) {}
+  SmithWatermanSA(ScoringFunction<elemTy> &scoringFunc, bool allowMismatches = false)
+      : scoringFunc(scoringFunc), allowMismatches(allowMismatches) {}
 
   AlignedSeq<elemTy> compute(ArrayTy &seq1, ArrayTy &seq2) {
     Matrix m(seq1.size(), seq2.size());
@@ -109,25 +119,23 @@ public:
         int top_cost = findMaxGapProfit(m, i - 1, j, Direction::TOP);
         int cost = diag_cost;
         Direction d = DIAG;
-        bool isMatch = true;
+
 
         if (cost < left_cost) {
           d = LEFT;
           cost = left_cost;
-          isMatch = false;
         }
 
         if (cost < top_cost) {
           d = TOP;
           cost = top_cost;
-          isMatch = false;
         }
 
         if (cost < 0) {
           cost = 0;
         }
 
-        m(i, j) = Cell(cost, d, isMatch);
+        m(i, j) = Cell(cost, d);
       }
     }
     cout << m << "\n";

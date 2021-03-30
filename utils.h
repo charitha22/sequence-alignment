@@ -21,17 +21,15 @@ struct Cell
 private:
   int cost;
   Direction direction;
-  bool isMatch;
 
 public:
-  Cell(int value, Direction direction, bool isMatch) : cost(value), direction(direction), isMatch(isMatch) {}
-  Cell(const Cell &c) : cost(c.cost), direction(c.direction), isMatch(c.isMatch) {}
+  Cell(int value, Direction direction) : cost(value), direction(direction) {}
+  Cell(const Cell &c) : cost(c.cost), direction(c.direction) {}
 
   int getCost() const { return cost; }
   void setCost(int value) {cost = value;}
   int getDirection() const {return direction;}
   void setDirection(Direction value) {direction = value;}
-  bool getMatch() const {return isMatch;}
   friend ostream &operator<<(ostream &os, const Cell &c)
   {
     os << "(" << c.cost << ",";
@@ -43,11 +41,6 @@ public:
       os << "LEFT";
     else
       os << "NONE";
-    os << ",";
-    if (c.isMatch)
-      os << "T";
-    else
-      os << "F";
     os << ")";
 
     return os;
@@ -65,7 +58,7 @@ public:
   {
     for (unsigned i = 0; i < rows + 1; i++)
     {
-      data.push_back(vector<Cell>(cols + 1, Cell(0, NONE, false)));
+      data.push_back(vector<Cell>(cols + 1, Cell(0, NONE)));
     }
   }
 
@@ -96,7 +89,7 @@ struct AlignedPair
   bool match = false;
 
 public:
-  AlignedPair(elemTy *eL, elemTy *eR) : eL(eL), eR(eR), match(eL && eR && *eL == *eR) {}
+  AlignedPair(elemTy *eL, elemTy *eR, bool match) : eL(eL), eR(eR), match(match) {}
   bool isMatch() { return match; }
   bool isMisMatch() { return !match; }
   elemTy *getLeft() const { return eL; }
@@ -140,6 +133,7 @@ template<typename elemTy>
 class ScoringFunction {
 public:
   virtual int operator()(elemTy, elemTy) = 0;
+  virtual bool isSimilar(elemTy, elemTy) = 0;
   virtual int gap(int k) = 0;
 };
 

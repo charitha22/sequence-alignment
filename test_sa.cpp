@@ -4,43 +4,18 @@
 #include "smith_waterman_sa.h"
 using namespace std;
 
-int match(char a, char b)
-{
-  if (a == b)
-    return 3;
-  else
-    return -3;
-}
-
 class CharScoringFunc : public ScoringFunction<char>
 {
 public:
   int gap(int k) override { return 2; }
   int operator()(char x, char y) override
   {
-    if (x != y)
-      return 0;
-
-    switch (x)
-    {
-    case 'L':
-      return 100;
-      break;
-    case 'A':
-      return 5;
-      break;
-    case 'M':
-      return 10;
-      break;
-    case 'D':
-      return 20;
-      break;
-
-    default:
-      return 5;
-      break;
-    }
+    if (x == y)
+      return 3;
+    else
+      return -3;
   }
+  bool isSimilar(char x, char y) override {return x == y;}
 };
 
 int main(int argc, char **argv)
@@ -50,10 +25,9 @@ int main(int argc, char **argv)
   SmithWatermanSA<char, vector<char>> SWSA(charScoringFunc);
 
   // example from : https://en.wikipedia.org/wiki/Smith%E2%80%93Waterman_algorithm
-  // string s1 = "TGTTACGG";
-  // string s2 = "GGTTGACTA";
-  string s1 = "LADM";
-  string s2 = "LAMD";
+  string s1 = "TGTTACGG";
+  string s2 = "GGTTGACTA";
+
 
   vector<char> seq1(s1.begin(), s1.end());
   vector<char> seq2(s2.begin(), s2.end());

@@ -13,7 +13,8 @@ template <typename elemTy, typename ArrayTy>
 class NeedlemanWunschSA
 {
 private:
-  ScoringFunction<elemTy>& costModel;
+  ScoringFunction<elemTy> &costModel;
+  bool allowMismatches{false};
 
   AlignedSeq<elemTy> constructSoln(Matrix &m, ArrayTy &seq1, ArrayTy &seq2)
   {
@@ -25,22 +26,33 @@ private:
     while (i >= 0 || j >= 0)
     {
 
-      if (i >= 0 && j >= 0 && m(i, j).getMatch())
+      if (i >= 0 && j >= 0 && m(i, j).getDirection() == DIAG)
       {
-        AlignedPair<elemTy> point(&seq1[i], &seq2[j]);
-        result.insert(result.begin(), point);
+        if (costModel.isSimilar(seq1[i], seq2[j]) || allowMismatches)
+        {
+          AlignedPair<elemTy> point(&seq1[i], &seq2[j], true);
+          result.insert(result.begin(), point);
+        }
+        else
+        {
+          AlignedPair<elemTy> point1(&seq1[i], nullptr, false);
+          AlignedPair<elemTy> point2(nullptr, &seq2[j], false);
+          result.insert(result.begin(), point2);
+          result.insert(result.begin(), point1);
+        }
+
         i--;
         j--;
       }
       else if (i >= 0 && m(i, j).getDirection() == TOP)
       {
-        AlignedPair<elemTy> point(&seq1[i], nullptr);
+        AlignedPair<elemTy> point(&seq1[i], nullptr, false);
         result.insert(result.begin(), point);
         i--;
       }
       else
       {
-        AlignedPair<elemTy> point(nullptr, &seq2[j]);
+        AlignedPair<elemTy> point(nullptr, &seq2[j], false);
         result.insert(result.begin(), point);
         j--;
       }
@@ -50,7 +62,7 @@ private:
   }
 
 public:
-  NeedlemanWunschSA(ScoringFunction<elemTy>& costModel) : costModel(costModel) {}
+  NeedlemanWunschSA(ScoringFunction<elemTy> &costModel, bool allowMismatches = false) : costModel(costModel), allowMismatches(allowMismatches) {}
 
   AlignedSeq<elemTy> compute(ArrayTy &seq1, ArrayTy &seq2)
   {
@@ -76,23 +88,20 @@ public:
         int top_cost = m(i - 1, j).getCost() - costModel.gap(0);
         int cost = diag_cost;
         Direction d = DIAG;
-        bool isMatch = true;
 
         if (cost < left_cost)
         {
           d = LEFT;
           cost = left_cost;
-          isMatch = false;
         }
 
         if (cost < top_cost)
         {
           d = TOP;
           cost = top_cost;
-          isMatch = false;
         }
 
-        m(i, j) = Cell(cost, d, isMatch);
+        m(i, j) = Cell(cost, d);
       }
     }
 
