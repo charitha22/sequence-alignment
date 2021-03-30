@@ -136,4 +136,11 @@ public:
   }
 };
 
+template<typename elemTy>
+class ScoringFunction {
+public:
+  virtual int operator()(elemTy, elemTy) = 0;
+  virtual int gap(int k) = 0;
+};
+
 #endif

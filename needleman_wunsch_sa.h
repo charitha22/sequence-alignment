@@ -6,14 +6,14 @@
 #include <assert.h>
 #include <string>
 #include "utils.h"
+
 using namespace std;
 
 template <typename elemTy, typename ArrayTy>
 class NeedlemanWunschSA
 {
 private:
-  function<int(elemTy, elemTy)> match;
-  const int gap{2};
+  ScoringFunction<elemTy>& costModel;
 
   AlignedSeq<elemTy> constructSoln(Matrix &m, ArrayTy &seq1, ArrayTy &seq2)
   {
@@ -50,7 +50,7 @@ private:
   }
 
 public:
-  NeedlemanWunschSA(function<int(elemTy, elemTy)> match) : match(match) {}
+  NeedlemanWunschSA(ScoringFunction<elemTy>& costModel) : costModel(costModel) {}
 
   AlignedSeq<elemTy> compute(ArrayTy &seq1, ArrayTy &seq2)
   {
@@ -58,12 +58,12 @@ public:
 
     for (int i = -1; i < m.get_rows(); i++)
     {
-      m(i, -1).setCost(-gap);
+      m(i, -1).setCost(-costModel.gap(0));
       m(i, -1).setDirection(TOP);
     }
     for (int i = -1; i < m.get_cols(); i++)
     {
-      m(-1, i).setCost(-gap);
+      m(-1, i).setCost(-costModel.gap(0));
       m(-1, i).setDirection(LEFT);
     }
 
@@ -71,9 +71,9 @@ public:
     {
       for (unsigned j = 0; j < m.get_cols(); ++j)
       {
-        int diag_cost = m(i - 1, j - 1).getCost() + match(seq1[i], seq2[j]);
-        int left_cost = m(i, j - 1).getCost() - gap;
-        int top_cost = m(i - 1, j).getCost() - gap;
+        int diag_cost = m(i - 1, j - 1).getCost() + costModel(*(seq1.begin() + i), *(seq2.begin() + j));
+        int left_cost = m(i, j - 1).getCost() - costModel.gap(0);
+        int top_cost = m(i - 1, j).getCost() - costModel.gap(0);
         int cost = diag_cost;
         Direction d = DIAG;
         bool isMatch = true;
@@ -95,6 +95,8 @@ public:
         m(i, j) = Cell(cost, d, isMatch);
       }
     }
+
+    cout << m << "\n";
 
     return constructSoln(m, seq1, seq2);
   }
